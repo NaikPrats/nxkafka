@@ -150,19 +150,19 @@ int main (int argc, char **argv) {
                 assert(0);
         }
         
-        if (rd_kafka_conf_set(conf, "ssl.ca.location", "/Users/pratnaik/Desktop/kafka-builds/librdkafka/certificate/ca-cert",
+        if (rd_kafka_conf_set(conf, "ssl.ca.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/ca-cert",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
         
-        if (rd_kafka_conf_set(conf, "ssl.certificate.location", "/Users/pratnaik/Desktop/kafka-builds/librdkafka/certificate/client_librdkafka_client.pem",
+        if (rd_kafka_conf_set(conf, "ssl.certificate.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_librdkafka_client.pem",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
         
-        if (rd_kafka_conf_set(conf, "ssl.key.location", "/Users/pratnaik/Desktop/kafka-builds/librdkafka/certificate/client_librdkafka_client.key",
+        if (rd_kafka_conf_set(conf, "ssl.key.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_librdkafka_client.key",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
