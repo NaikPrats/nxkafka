@@ -1,0 +1,2 @@
+client_librdkafka_client.* keys are client keys with passphrase
+client_localhost_client.* keys are client keys without passphrase
