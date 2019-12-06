@@ -42,6 +42,40 @@
  * is builtin from within the librdkafka source tree and thus differs. */
 #include "rdkafka.h"
 
+
+int is_ssl_enabled = 1;
+
+void enable_ssl_config(rd_kafka_conf_t *conf)
+{
+
+	char errstr[512];       /* librdkafka API error reporting buffer */
+
+        if (rd_kafka_conf_set(conf, "security.protocol", "SSL",
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if (rd_kafka_conf_set(conf, "ssl.ca.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/ca-cert",
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if (rd_kafka_conf_set(conf, "ssl.certificate.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_localhost_client.pem",
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if (rd_kafka_conf_set(conf, "ssl.key.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_localhost_client.key",
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+}
+
+
 /**
  * @brief Message delivery report callback.
  *
@@ -112,6 +146,11 @@ void test_1(const char *brokers, const char *topic)
 		assert(0);
 	}
 
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+
 	rd_kafka_conf_set_dr_msg_cb(conf, dr_msg_cb);
 	rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
 	if (!rk) {
@@ -169,6 +208,8 @@ void test_1(const char *brokers, const char *topic)
 				rd_kafka_outq_len(rk));
 
 	rd_kafka_destroy(rk);
+
+	printf("TEST 1 successful.\n");
 }
 
 // Tests multiple rd_kafka_t object creations and destructions.
@@ -196,18 +237,23 @@ void test_2(const char *brokers, const char *topic)
                 if (!topic)
 			assert(0);
 
-        	/* Create Kafka handle */
-        	if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,errstr, sizeof(errstr)))) {
-                        	fprintf(stderr,"%% Failed to create new producer: %s\n",errstr);
-                        	assert(0);
+	        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+        	                        errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                	fprintf(stderr, "%s\n", errstr);
+                	assert(0);
+        	}
+  	
+		if(is_ssl_enabled)
+        	{
+                	enable_ssl_config(conf);
         	}
 
-        	/* Add brokers */
-        	if (rd_kafka_brokers_add(rk, brokers) == 0) {
-                        fprintf(stderr, "%% No valid brokers specified\n");
-                        assert(0);
-        	}
-
+		rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+		if (!rk) {
+			fprintf(stderr,
+					"%% Failed to create new producer: %s\n", errstr);
+			assert(0);
+		}
 
 		rkt = rd_kafka_topic_new(rk, topic, topic_conf);
 		if (!rkt)
@@ -259,9 +305,22 @@ void test_3(const char *brokers, const char *topic)
 	if (!topic)
 		assert(0);
 
-	/* Create Kafka handle */
-	if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,errstr, sizeof(errstr)))) {
-		fprintf(stderr,"%% Failed to create new producer: %s\n",errstr);
+
+	if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+				errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+		fprintf(stderr, "%s\n", errstr);
+		assert(0);
+	}
+
+	if(is_ssl_enabled)
+	{       
+		enable_ssl_config(conf);
+	}
+
+	rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+	if (!rk) {
+		fprintf(stderr,
+				"%% Failed to create new producer: %s\n", errstr);
 		assert(0);
 	}
 
@@ -269,14 +328,8 @@ void test_3(const char *brokers, const char *topic)
 	if (!rkt)         
 	{       printf("Failed to create topic for "
 			"rdkafka instance\n");
-	assert(0);
+		assert(0);
 	}
-
-        /* Add brokers */
-        if (rd_kafka_brokers_add(rk, brokers) == 0) {
-                fprintf(stderr, "%% No valid brokers specified\n");
-                assert(0);
-        }   
 
         if ((r = rd_kafka_metadata(rk, 0, rkt, &metadata,timeout)) != RD_KAFKA_RESP_ERR_NO_ERROR)
         {
@@ -347,55 +400,62 @@ void test_4(const char *brokers, const char *topic)
 	conf = rd_kafka_conf_new();
         topic_conf = rd_kafka_topic_conf_new();
 
-	/* Set delivery report callback */
-	rd_kafka_conf_set_dr_cb(conf, test_4_dr_cb);
+        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
 
-        /* Create Kafka handle */
-        if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,errstr, sizeof(errstr)))) {
-                fprintf(stderr,"%% Failed to create new producer: %s\n",errstr);
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+
+	
+        rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+        if (!rk) {
+                fprintf(stderr,
+                                "%% Failed to create new producer: %s\n", errstr);
                 assert(0);
         }
 
 	rkt = rd_kafka_topic_new(rk, topic, topic_conf);
-
 	if (!rkt)
-	{
-		printf("Failed to create topic: %s\n",rd_kafka_err2str(rd_kafka_last_error()));
-		assert(0);
+	{       printf("Failed to create topic for "
+			"rdkafka instance\n");
+	assert(0);
 	}
 
-        /* Add brokers */
-        if (rd_kafka_brokers_add(rk, brokers) == 0) {
-                fprintf(stderr, "%% No valid brokers specified\n");
-                assert(0);
-        }
 
-        /* Request metadata so that we know the cluster is up before producing
-         * messages, otherwise erroneous partitions will not fail immediately.*/
-        if ((r = rd_kafka_metadata(rk, 0, rkt, &metadata,1000)) != RD_KAFKA_RESP_ERR_NO_ERROR)
+	/* Set delivery report callback */
+	rd_kafka_conf_set_dr_cb(conf, test_4_dr_cb);
+
+	/* Request metadata so that we know the cluster is up before producing
+	 * messages, otherwise erroneous partitions will not fail immediately.*/
+	if ((r = rd_kafka_metadata(rk, 0, rkt, &metadata,1000)) != RD_KAFKA_RESP_ERR_NO_ERROR)
 	{
-                printf("Failed to acquire metadata: %s\n",rd_kafka_err2str(r));
+		printf("Failed to acquire metadata: %s\n",rd_kafka_err2str(r));
 		assert(0);
 	}
-        rd_kafka_metadata_destroy(metadata);
+	rd_kafka_metadata_destroy(metadata);
 
 	/* Produce a message */
-		int *msgidp = malloc(sizeof(*msgidp));
-		*msgidp = i;
-                snprintf(msg, sizeof(msg), "%s test message #%i", __FUNCTION__, i);
-		r = rd_kafka_produce(rkt, partition, RD_KAFKA_MSG_F_COPY,
-				     msg, strlen(msg), NULL, 0, msgidp);
-                if (r == -1) {
-			if (rd_kafka_last_error() == RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION)
-				printf("Failed to produce message #%i: "
-					 "unknown partition: good!\n", i);
-			else
-				printf("Failed to produce message #%i: %s\n",
-					  i, rd_kafka_err2str(rd_kafka_last_error()));
-                        free(msgidp);
-		} else {
-			printf("Messege Produced");
-		}
+	int *msgidp = malloc(sizeof(*msgidp));
+	*msgidp = i;
+	snprintf(msg, sizeof(msg), "%s test message #%i", __FUNCTION__, i);
+	r = rd_kafka_produce(rkt, partition, RD_KAFKA_MSG_F_COPY,
+			msg, strlen(msg), NULL, 0, msgidp);
+	if (r == -1) {
+		if (rd_kafka_last_error() == RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION)
+			printf("Failed to produce message #%i: "
+					"unknown partition: good!\n", i);
+		else
+			printf("Failed to produce message #%i: %s\n",
+					i, rd_kafka_err2str(rd_kafka_last_error()));
+		free(msgidp);
+	} else {
+		printf("Messege Produced");
+	}
 
 	/* Wait for messages to time out */
 	rd_kafka_flush(rk, -1);
@@ -430,28 +490,36 @@ void test_5(const char *brokers, const char *topic)
 	conf = rd_kafka_conf_new();
 	topic_conf = rd_kafka_topic_conf_new();
 
+
+        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+
+
+        rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+        if (!rk) {
+                fprintf(stderr,
+                                "%% Failed to create new producer: %s\n", errstr);
+                assert(0);
+        }
+
+        rkt = rd_kafka_topic_new(rk, "Random123", topic_conf);
+        if (!rkt)
+        {       printf("Failed to create topic for "
+                        "rdkafka instance\n");
+        	assert(0);
+        }
+
+
 	/* Set delivery report callback */
 	rd_kafka_conf_set_dr_cb(conf, test_4_dr_cb);
-
-	/* Create Kafka handle */
-	if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,errstr, sizeof(errstr)))) {
-		fprintf(stderr,"%% Failed to create new producer: %s\n",errstr);
-		assert(0);
-	}
-
-	rkt = rd_kafka_topic_new(rk, "RANDOM", topic_conf);
-
-	if (!rkt)
-	{       
-		printf("Failed to create topic: %s\n",rd_kafka_err2str(rd_kafka_last_error()));
-		assert(0);
-	}
-
-	/* Add brokers */
-	if (rd_kafka_brokers_add(rk, brokers) == 0) {
-		fprintf(stderr, "%% No valid brokers specified\n");
-		assert(0);
-	}
 
 	/* Request metadata so that we know the cluster is up before producing
 	 * messages, otherwise erroneous partitions will not fail immediately.*/
@@ -496,7 +564,7 @@ void test_5(const char *brokers, const char *topic)
 void test_6(const char *brokers, const char *topic)
 {
 	
-        printf("TEST 6 : Data sent was greater than max allowed limit, handle failure.\n");
+	printf("TEST 6 : Data sent was greater than max allowed limit, handle failure.\n");
 	int partition = 0;
 	int r;
 	rd_kafka_t *rk;
@@ -513,6 +581,18 @@ void test_6(const char *brokers, const char *topic)
 	/* Topic configuration */
 	topic_conf = rd_kafka_topic_conf_new();
 
+        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+
+
 	/* Set a small maximum message size. */
 	if (rd_kafka_conf_set(conf, "message.max.bytes", "100000",
 			      errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK)
@@ -523,25 +603,21 @@ void test_6(const char *brokers, const char *topic)
 	/* Set delivery report callback */
 	rd_kafka_conf_set_dr_cb(conf, dr_cb);
 
-	/* Create Kafka handle */
-	if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,
-					errstr, sizeof(errstr)))) {
-			fprintf(stderr,
-				"%% Failed to create new producer: %s\n",
-				errstr);
-			assert(0);
-	}
+        rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+        if (!rk) {
+                fprintf(stderr,
+                                "%% Failed to create new producer: %s\n", errstr);
+                assert(0);
+        }
 
+        rkt = rd_kafka_topic_new(rk, topic, topic_conf);
+        if (!rkt)
+        {       printf("Failed to create topic for "
+                        "rdkafka instance\n");
+        	assert(0);
+        }
 
-	/* Add brokers */
-	if (rd_kafka_brokers_add(rk, brokers) == 0) {
-			fprintf(stderr, "%% No valid brokers specified\n");
-			assert(0);
-	}
-
-	/* Create topic */
-	rkt = rd_kafka_topic_new(rk, topic, topic_conf);
-        topic_conf = NULL; /* Now owned by topic */
+	topic_conf = NULL; /* Now owned by topic */
 
 	msg = calloc(1, msgsize);
 
@@ -601,7 +677,6 @@ void test_6(const char *brokers, const char *topic)
 	rd_kafka_destroy(rk);
 
 	return;
-
 }
 
 // Test7 : Sent continuous stream of data every 3 sec interval and check ack.
@@ -657,28 +732,33 @@ void test_9(const char *brokers, const char *topic)
         conf = rd_kafka_conf_new();
         topic_conf = rd_kafka_topic_conf_new();
 
+        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                assert(0);
+        }
+
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+
+        rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+        if (!rk) {
+                fprintf(stderr,
+                                "%% Failed to create new producer: %s\n", errstr);
+                assert(0);
+        }
+
+        rkt = rd_kafka_topic_new(rk, topic, topic_conf);
+        if (!rkt)
+        {       printf("Failed to create topic for "
+                        "rdkafka instance\n");
+                assert(0);
+        }
+
         /* Set delivery report callback */
         rd_kafka_conf_set_dr_cb(conf, test_9_dr_cb);
-
-        /* Create Kafka handle */
-        if (!(rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf,errstr, sizeof(errstr)))) {
-                fprintf(stderr,"%% Failed to create new producer: %s\n",errstr);
-                assert(0);
-        }
-
-        rkt = rd_kafka_topic_new(rk,topic, topic_conf);
-
-        if (!rkt)
-        {
-                printf("Failed to create topic: %s\n",rd_kafka_err2str(rd_kafka_last_error()));
-                assert(0);
-        }
-
-        /* Add brokers */
-        if (rd_kafka_brokers_add(rk, brokers) == 0) {
-                fprintf(stderr, "%% No valid brokers specified\n");
-                assert(0);
-        }
 
         /* Request metadata so that we know the cluster is up before producing
          * messages, otherwise erroneous partitions will not fail immediately.*/
@@ -750,30 +830,12 @@ void test_11(const char *brokers, const char *topic)
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
-        
-	if (rd_kafka_conf_set(conf, "security.protocol", "SSL",
-                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                assert(0);
-        }
+	
+	if(is_ssl_enabled)
+	{	
+		enable_ssl_config(conf);
+	}
 
-        if (rd_kafka_conf_set(conf, "ssl.ca.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/ca-cert",
-                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                assert(0);
-        }
-
-        if (rd_kafka_conf_set(conf, "ssl.certificate.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_localhost_client.pem",
-                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                assert(0);
-        }
-
-        if (rd_kafka_conf_set(conf, "ssl.key.location", "/Users/pratnaik/Desktop/kafka-builds/nxkafka/librdkafka/certificate/client_localhost_client.key",
-                                errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                assert(0);
-        }
 /*
         if (rd_kafka_conf_set(conf, "ssl.key.password", "abcdefgh",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
@@ -863,7 +925,12 @@ void test_12(const char *brokers, const char *topic)
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
-        
+       
+        if(is_ssl_enabled)
+        {
+                enable_ssl_config(conf);
+        }
+ 
 	rd_kafka_conf_set_dr_msg_cb(conf, dr_msg_cb);
         rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
         if (!rk) {
@@ -887,41 +954,41 @@ void test_12(const char *brokers, const char *topic)
 
 	while(1)
 	{
-        err = rd_kafka_producev(
-                        /* Producer handle */
-                        rk,
-			RD_KAFKA_V_PARTITION(0),
-                        /* Topic name */
-                        RD_KAFKA_V_TOPIC(topic),
-                        /* Make a copy of the payload. */
-                        RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),
-                        /* Message value and length */
-                        RD_KAFKA_V_VALUE(buf, len),
-                        /* Per-Message opaque, provided in
-                         * delivery report callback as
-                         * msg_opaque. */
-                        RD_KAFKA_V_OPAQUE(NULL),
-                        /* End sentinel */
-                        RD_KAFKA_V_END);
+		err = rd_kafka_producev(
+				/* Producer handle */
+				rk,
+				RD_KAFKA_V_PARTITION(0),
+				/* Topic name */
+				RD_KAFKA_V_TOPIC(topic),
+				/* Make a copy of the payload. */
+				RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),
+				/* Message value and length */
+				RD_KAFKA_V_VALUE(buf, len),
+				/* Per-Message opaque, provided in
+				 * delivery report callback as
+				 * msg_opaque. */
+				RD_KAFKA_V_OPAQUE(NULL),
+				/* End sentinel */
+				RD_KAFKA_V_END);
 
-        if (err) {
-                fprintf(stderr,
-                                "%% Failed to produce to topic %s: %s\n",
-                                topic, rd_kafka_err2str(err));
-                assert(0);
+		if (err) {
+			fprintf(stderr,
+					"%% Failed to produce to topic %s: %s\n",
+					topic, rd_kafka_err2str(err));
+			assert(0);
 
-        } else {
-                fprintf(stderr, "%% Enqueued message (%zd bytes) "
-                                "for topic %s\n",
-                                len, topic);
-        }
+		} else {
+			fprintf(stderr, "%% Enqueued message (%zd bytes) "
+					"for topic %s\n",
+					len, topic);
+		}
 
-        rd_kafka_poll(rk, 0/*non-blocking*/);
-        rd_kafka_flush(rk, 10*1000 /* wait for max 10 seconds */);
+		rd_kafka_poll(rk, 0/*non-blocking*/);
+		rd_kafka_flush(rk, 10*1000 /* wait for max 10 seconds */);
 
-        if (rd_kafka_outq_len(rk) > 0)
-                fprintf(stderr, "%% %d message(s) were not delivered\n",
-                                rd_kafka_outq_len(rk));
+		if (rd_kafka_outq_len(rk) > 0)
+			fprintf(stderr, "%% %d message(s) were not delivered\n",
+					rd_kafka_outq_len(rk));
 	}
         rd_kafka_destroy(rk);
 }
@@ -943,14 +1010,15 @@ int main (int argc, char **argv) {
 
 	printf("Broker IP/port : %s, topic name : %s\n",brokers,topic);
 
+	printf("is_ssl_enabled=%d\n",is_ssl_enabled);
+
 	//test_1(brokers,topic);
 	//test_2(brokers,topic);
-	//test_3(brokers,topic);	
+        //test_3(brokers,topic);	
 	//test_4(brokers,topic);
 	//test_5(brokers,topic);	
 	//test_6(brokers,topic);
 	//test_9(brokers,topic);
-
 	test_11(brokers,topic);
 	//test_12(brokers,topic);
 
