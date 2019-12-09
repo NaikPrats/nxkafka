@@ -132,7 +132,7 @@ static void dr_cb (rd_kafka_t *rk, void *payload, size_t len,
 void test_1(const char *brokers, const char *topic)
 {
 
-	printf("TEST 1 : Connect to broker success, data sent on topic successfully and report success.\n");
+	printf("TEST 1 started.\n");
 	rd_kafka_t *rk;         /* Producer instance handle */
 	rd_kafka_conf_t *conf;  /* Temporary configuration object */
 	char errstr[512];       /* librdkafka API error reporting buffer */
@@ -220,8 +220,8 @@ void test_2(const char *brokers, const char *topic)
 	int i;
 	const int NUM_ITER = 10;
 	char errstr[512];
-
-	printf("TEST 2: Creating and destroying %i kafka instances\n", NUM_ITER);
+	printf("TEST 2 started.\n");
+	printf("Creating and destroying %i kafka instances\n", NUM_ITER);
 
 	/* Create, use and destroy NUM_ITER kafka instances. */
 	for (i = 0 ; i < NUM_ITER ; i++) {
@@ -278,6 +278,8 @@ void test_2(const char *brokers, const char *topic)
 		/* Destroy rdkafka instance */
 		rd_kafka_destroy(rk);
 	}
+
+	printf("TEST 2 successful.\n");
 }
 
 
@@ -290,8 +292,8 @@ void test_3(const char *brokers, const char *topic)
 	char errstr[512];
 	int r;
 	int timeout=1000; //ms
-
-	printf("TEST 3: Test scenario  : Producer trying to connect to broker but no response or error response from broker\n");
+	printf("TEST 3 started.\n");
+	printf("Producer trying to connect to broker but no response or error response from broker\n");
 
 	rd_kafka_t *rk;
 	rd_kafka_topic_t *rkt;
@@ -359,6 +361,7 @@ destroy:
 
 	/* Destroy rdkafka instance */
 	rd_kafka_destroy(rk);
+	printf("TEST 3 successful.\n");
 
 }
 
@@ -383,8 +386,8 @@ static void test_4_dr_cb (rd_kafka_t *rk, void *payload, size_t len,
 void test_4(const char *brokers, const char *topic)
 {
 
-
-	printf("TEST 4: Test scenario  : Producer trying to produce to unknown partition\n");
+	printf("TEST 4 started.\n");
+	printf("Test scenario  : Producer trying to produce to unknown partition\n");
 	int partition = 99; /* non-existent */
 	int r;
 	rd_kafka_t *rk;
@@ -448,7 +451,7 @@ void test_4(const char *brokers, const char *topic)
 	if (r == -1) {
 		if (rd_kafka_last_error() == RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION)
 			printf("Failed to produce message #%i: "
-					"unknown partition: good!\n", i);
+					"unknown partition: good! expected result\n", i);
 		else
 			printf("Failed to produce message #%i: %s\n",
 					i, rd_kafka_err2str(rd_kafka_last_error()));
@@ -466,6 +469,7 @@ void test_4(const char *brokers, const char *topic)
 	/* Destroy rdkafka instance */
 	printf("Destroying kafka instance %s\n", rd_kafka_name(rk));
 	rd_kafka_destroy(rk);
+	printf("TEST 4 successful.\n");
 }
 
 //test 5
@@ -474,7 +478,8 @@ void test_4(const char *brokers, const char *topic)
 void test_5(const char *brokers, const char *topic)
 {       
 
-	printf("TEST 5: Test scenario  : Producer trying to produce to unknown topic\n");
+	printf("TEST 5 started.\n");
+	printf("Test scenario  : Producer trying to produce to unknown topic\n");
 	int partition = RD_KAFKA_PARTITION_UA; 
 	int r;
 	rd_kafka_t *rk;
@@ -539,7 +544,7 @@ void test_5(const char *brokers, const char *topic)
 	if (r == -1) {
 		if (rd_kafka_last_error() == RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC)
 			printf("Failed to produce message #%i: "
-					"unknown topic: good!\n", i);
+					"unknown topic: good! expected result.\n", i);
 		else
 			printf("Failed to produce message #%i: %s\n",
 					i, rd_kafka_err2str(rd_kafka_last_error()));
@@ -557,14 +562,16 @@ void test_5(const char *brokers, const char *topic)
 	printf("Destroying kafka instance %s\n", rd_kafka_name(rk));
 	rd_kafka_destroy(rk);
 
+	printf("TEST 5 successful.\n");
+
 }
 
 // Test6 : Data sent was greater than max allowed limit, handle failure.
 // https://github.com/edenhill/librdkafka/blob/master/tests/0003-msgmaxsize.c
 void test_6(const char *brokers, const char *topic)
 {
-	
-	printf("TEST 6 : Data sent was greater than max allowed limit, handle failure.\n");
+	printf("TEST 6 started.\n");
+	printf("Data sent was greater than max allowed limit, handle failure.\n");
 	int partition = 0;
 	int r;
 	rd_kafka_t *rk;
@@ -676,47 +683,36 @@ void test_6(const char *brokers, const char *topic)
 	printf("Destroying kafka instance %s\n", rd_kafka_name(rk));
 	rd_kafka_destroy(rk);
 
-	return;
+	printf("TEST 6 successful.\n");
 }
-
-// Test7 : Sent continuous stream of data every 3 sec interval and check ack.
-void test_7(const char *brokers, const char *topic)
-{
-
-}
-
-// Test8 : Multiple producer producing to single broker on single topic.
-void test_8()
-{
-}
-
 
 static int msgid_next = 0;
 
-static void test_9_dr_cb (rd_kafka_t *rk, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque) {
+static void test_7_dr_cb (rd_kafka_t *rk, void *payload, size_t len, rd_kafka_resp_err_t err, void *opaque, void *msg_opaque) {
 	int msgid = *(int *)msg_opaque;
 
 	free(msg_opaque);
 
 	if (err != RD_KAFKA_RESP_ERR_NO_ERROR)
-		printf(" TEST 9: Message delivery failed: %s\n", rd_kafka_err2str(err));
+		printf(" TEST 7: Message delivery failed: %s\n", rd_kafka_err2str(err));
 
 	if (msgid != msgid_next) {
-		printf("TEST 9 : Delivered msg %i, expected %i\n",msgid, msgid_next);
+		printf("TEST 7 : Delivered msg %i, expected %i\n",msgid, msgid_next);
 		return;
 	}
 	
-	printf("TEST 9: messge %d recieved properly\n", msgid);
+	printf("TEST 7: messge %d recieved properly\n", msgid);
 	msgid_next = msgid+1;
 }
 
 
 
-// test 9
+// test 7
 // produce in order : https://github.com/edenhill/librdkafka/blob/master/tests/0005-order.c
-void test_9(const char *brokers, const char *topic)
+void test_7(const char *brokers, const char *topic)
 {
-	printf("TEST 9: Test scenario  : Producer trying to produce in order \n");
+	printf("TEST 7 started.\n");
+	printf("Test scenario  : Producer trying to produce in order \n");
         int partition = RD_KAFKA_PARTITION_UA;
         int r;
         rd_kafka_t *rk;
@@ -758,7 +754,7 @@ void test_9(const char *brokers, const char *topic)
         }
 
         /* Set delivery report callback */
-        rd_kafka_conf_set_dr_cb(conf, test_9_dr_cb);
+        rd_kafka_conf_set_dr_cb(conf, test_7_dr_cb);
 
         /* Request metadata so that we know the cluster is up before producing
          * messages, otherwise erroneous partitions will not fail immediately.*/
@@ -791,7 +787,7 @@ void test_9(const char *brokers, const char *topic)
 
 	}
 
-	printf(" TEST 9 : Produced %i messages, waiting for deliveries\n", msgcnt);
+	printf(" TEST 7 : Produced %i messages, waiting for deliveries\n", msgcnt);
 
         /* Wait for messages to time out */
         rd_kafka_flush(rk, -1);
@@ -801,17 +797,16 @@ void test_9(const char *brokers, const char *topic)
         /* Destroy rdkafka instance */
         printf("Destroying kafka instance %s\n", rd_kafka_name(rk));
         rd_kafka_destroy(rk);
+	printf("TEST 7 successful.\n");
 
 }
 
-// test 10 retry produce
-// https://github.com/edenhill/librdkafka/blob/master/tests/0076-produce_retry.c
-
 // SSL config on client
-void test_11(const char *brokers, const char *topic)
+void test_8(const char *brokers, const char *topic)
 {
 
-        printf("TEST 11 : Config SSL on client node , data sent on topic successfully and report success.\n");
+	printf("TEST 8 started.\n");
+        printf("Config SSL on client node , data sent on topic successfully and report success.\n");
         rd_kafka_t *rk;         /* Producer instance handle */
         rd_kafka_conf_t *conf;  /* Temporary configuration object */
         char errstr[512];       /* librdkafka API error reporting buffer */
@@ -851,7 +846,7 @@ void test_11(const char *brokers, const char *topic)
                 assert(0);
         }
 
-        snprintf(buf,512,"Test 11 :  test messege from producer");
+        snprintf(buf,512,"Test 8 :  test messege from producer");
 
         size_t len = strlen(buf);
         rd_kafka_resp_err_t err;
@@ -900,13 +895,15 @@ void test_11(const char *brokers, const char *topic)
                                 rd_kafka_outq_len(rk));
 
         rd_kafka_destroy(rk);
+	printf("TEST 8 successful.\n");
 }
 
 // Producer sending data continuously 
-void test_12(const char *brokers, const char *topic)
+void test_9(const char *brokers, const char *topic)
 {
 
-        printf("TEST 12 : Producer sending data continuously, data sent on topic successfully and report success.\n");
+	printf("TEST 9 started.\n");
+        printf("Producer sending data continuously, data sent on topic successfully and report success.\n");
         rd_kafka_t *rk;         /* Producer instance handle */
         rd_kafka_conf_t *conf;  /* Temporary configuration object */
         char errstr[512];       /* librdkafka API error reporting buffer */
@@ -939,7 +936,7 @@ void test_12(const char *brokers, const char *topic)
                 assert(0);
         }
 
-        snprintf(buf,512,"Test 12 :  Prod#1 test messege from producer");
+        snprintf(buf,512,"Test 9 :  Prod#1 test messege from producer");
 
         size_t len = strlen(buf);
         rd_kafka_resp_err_t err;
@@ -952,8 +949,11 @@ void test_12(const char *brokers, const char *topic)
                 return;
         }
 
-	while(1)
+	int i=0;
+	while(i<60)
 	{
+
+		sleep(1);
 		err = rd_kafka_producev(
 				/* Producer handle */
 				rk,
@@ -989,8 +989,10 @@ void test_12(const char *brokers, const char *topic)
 		if (rd_kafka_outq_len(rk) > 0)
 			fprintf(stderr, "%% %d message(s) were not delivered\n",
 					rd_kafka_outq_len(rk));
+		i++;
 	}
         rd_kafka_destroy(rk);
+	printf("TEST 9 successful.\n");
 }
 
 
@@ -1012,15 +1014,15 @@ int main (int argc, char **argv) {
 
 	printf("is_ssl_enabled=%d\n",is_ssl_enabled);
 
-	//test_1(brokers,topic);
-	//test_2(brokers,topic);
-        //test_3(brokers,topic);	
-	//test_4(brokers,topic);
-	//test_5(brokers,topic);	
-	//test_6(brokers,topic);
-	//test_9(brokers,topic);
-	test_11(brokers,topic);
-	//test_12(brokers,topic);
+	test_1(brokers,topic);
+	test_2(brokers,topic);
+        test_3(brokers,topic);	
+	test_4(brokers,topic);
+	test_5(brokers,topic);	
+	test_6(brokers,topic);
+	test_7(brokers,topic);
+	test_8(brokers,topic);
+	test_9(brokers,topic);
 
 	printf("Exiting test-suite...\n");
         return 0;
