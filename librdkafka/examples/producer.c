@@ -764,7 +764,7 @@ void test_7(const char *brokers, const char *topic)
                 assert(0);
         }
         rd_kafka_metadata_destroy(metadata);
-	int msgcnt = 500;
+	int msgcnt = 50;
 	
 	for (int i = 0 ; i < msgcnt ; i++) {
 		/* Produce a message */
@@ -814,12 +814,12 @@ void test_8(const char *brokers, const char *topic)
 
         conf = rd_kafka_conf_new();
 
-        if (rd_kafka_conf_set(conf, "debug", "security,broker",
+/*        if (rd_kafka_conf_set(conf, "debug", "security,broker",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
-
+*/
         if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
@@ -911,12 +911,12 @@ void test_9(const char *brokers, const char *topic)
 
         conf = rd_kafka_conf_new();
 
-        if (rd_kafka_conf_set(conf, "debug", "security,broker",
+/*        if (rd_kafka_conf_set(conf, "debug", "security,broker",
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 assert(0);
         }
-
+*/
         if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
                                 errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
